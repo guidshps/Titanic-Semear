@@ -6,19 +6,28 @@ import time
 
 class BrushlessMotor:
     """
-    Class that represents the brushless motor
+    Represents a brushless motor controlled by an eletronic speed controller and PWM signal.
 
-    - Hardware Pin (int) -> The hardware pin is the pin that the signal is generated. You should verify your board.
-    - Frequency (int) -> The frequency is the frequency that signal is generetad. 
-    - Minimum width (int) -> The minimum width is the minumim pulse width that ESC will receive. (microseconds)
-    - Maximum width (int)  -> The maximum width is maximum pulse width that ESC will receive. (microseconds)
-    - Incremental (int) -> The incremental is how much would be increased in the periods (microseconds)
-    - Period (float) -> The period is the period that speed are increased (seconds)
+    Args:
+        hardware_pin (int) -> The hardware pin that the signal is generated. You should verify your board.
+        frequency (int) -> The frequency that signal is generetad. 
+        min_w (int) -> The minumim pulse width that ESC will receive in microseconds
+        max_w (int)  -> Maximum pulse width that ESC will receive in microseconds
+        incremental (int) -> Amount that pulse is increased or decreased in each period in microseconds
+        period (float) -> Time between each increase or decrease of speed in seconds
     """
 
-    def __init__(self : int, hardware_pin: int, frequency : int, min_w : int, max_w : int, incremental : int, period : float): 
+    def __init__(
+            self, 
+            hardware_pin: int, 
+            frequency : int, 
+            min_w : int, 
+            max_w : int, 
+            incremental : int, 
+            period : float
+        ): 
         """
-        Initializer of the class, if the type of the parameters are not correct, the motor won't work
+        Initializer of the class, if the type of the parameters are not correct, the motor won't work.
         """
         if ( 
             not isinstance(hardware_pin, int) 
@@ -37,9 +46,10 @@ class BrushlessMotor:
             self.incremental = None #Define 'None' how it does not exist
             self.period = None #Define 'None' how it does not exist
             self.time_before = None #Define 'None' how it does not exist
+            self.duty = None #Define 'None' how it does not exist
             return #Return if all of types are int
 
-        self.hardware_pin = hardware_pin #The hardware pin from Raspberry Py (Hardware Pin)
+        self.hardware_pin = hardware_pin #The hardware pin from Raspberry Py 
         self.frequency = frequency #The frequency that Raspberry Pi runs the pulses
         self.current_pulse_w = min_w #The current pulse width in microseconds
         self.goal_pulse_w = min_w #The goal pulse width in microseconds to achieve (To soft accelerate)
@@ -48,13 +58,15 @@ class BrushlessMotor:
         self.incremental = incremental #Define how fast the brushless motor will acelerate
         self.period = period #Define how much time would take to increase to speed again
         self.time_before = 0 #It's the time before the speed have been increased, used to reference (In Seconds)
+        self.duty = self.frequency * self.min_w #Stores the duty from the signal
 
     def set_speed(self, new_goal_pulse_w : int): 
         """
         Function that changes speed of the motor. This function do the brushless motor accelerate softly. If
         the new goal pulse are not an int type and the motor doesn't exist, it won't work
         
-        - New goal pulse width (int) -> The new goal pulse width is the width that would be achieve (microseconds)
+        Args:
+            new_goal_pulse_w (int) -> The new goal pulse that would be achieve in microseconds
         """
 
         if self.hardware_pin is None: #Verify if the hardware pin is valid
@@ -73,7 +85,8 @@ class BrushlessMotor:
         Function that changes speed of the motor. This function do the brushless motor accelerate abtruply. If
         the new goal pulse are not an int type or the motor doesn't exist, it won't work.
         
-        - New goal pulse width (int) -> The new goal pulse width is the width that would be achieve (microseconds)
+        Args:
+            new_goal_pulse_w (int) -> The new goal pulse width is the width that would be achieve in microseconds
         """
 
         if self.hardware_pin is None: #Verify if the hardware pin is valid
@@ -94,7 +107,8 @@ class BrushlessMotor:
         Function that calibrate the eletronic speed controller. If the pigpio.pi 
         is not valid or the motor doesn't exist, it won't work.
 
-        - Pi (pigpio.pi) -> Pi is one object from the class from 'pi' from the library pigpio
+        Args:
+            pi (pigpio.pi) -> 'pi' is one object from the class from 'pi' from the library pigpio
         """
 
         if self.hardware_pin is None: #Verify if the hardware pin is valid
@@ -117,7 +131,8 @@ class BrushlessMotor:
         Function that changes incremental from brushless motor. If new incremental is not an int or the motor doesn't exist,
         it won't work.
 
-        - New incremental (int) -> New incremental is the period that will be setted.
+        Args:
+            new_incremental (int) -> New incremental that will be setted.
         """
 
         if self.hardware_pin is None: #Verify if the motor is not valid
@@ -133,7 +148,8 @@ class BrushlessMotor:
         Function that changes the period from brushless motor. If the new period is not an int or the motor doesn't exist,
         it won't work.
         
-        - New period (int) -> New period is the period that will be setted. (seconds)
+        Args:
+            new_period (int) -> The new period that will be setted. (seconds)
         """
 
         if self.hardware_pin is None: #Verify if the motor is not valid
@@ -149,7 +165,8 @@ class BrushlessMotor:
         Function that runs the brushless motor and accelerate it. If the Pi is not the right type and 
         the motor doesn't exist, it won't work
 
-        - Pi (pigpio.pi) -> Pi is one object from the class from 'pi' from the library pigpio
+        Args:
+            pi (pigpio.pi) -> 'pi' is one object from the class from 'pi' from the library pigpio
         """
 
         if self.hardware_pin is None: #Verify if the hardware pin is valid
@@ -158,11 +175,11 @@ class BrushlessMotor:
         elif not isinstance(pi, pigpio.pi): #Verify if the pi is not valid 
             return #Return if pi is not of class of 'pihardware.pi'
         
-        #Acceleration block for brushless motor
-        my_time = time.monotic() #The current time to compare with time before the last acceleration
+        #Acceleration or desacceleration block for brushless motor
+        if self.current_pulse_w != self.goal_pulse_w: #Verify if is necessary to change speed
+            my_time = time.monotic() #The current time to compare with time before the last acceleration
 
-        if my_time - self.time_before >= self.period: #Verify the period alrealdy have passed
-            if self.current_pulse_w != self.goal_pulse_w: #If goal is different from current pulse width
+            if my_time - self.time_before >= self.period: #Verify the period alrealdy have passed
                 if self.current_pulse_w > self.goal_pulse_w: #If the current pulse width is bigger than the goal
                     self.current_pulse_w -= self.incremental #Decreases the speed of the motor
                     if self.current_pulse_w < self.goal_pulse_w: #If the current pulse width pass the goal
@@ -172,18 +189,19 @@ class BrushlessMotor:
                     if self.current_pulse_w > self.goal_pulse_w: #If the current pulse width pass the goal
                         self.current_pulse_w = self.goal_pulse_w #The current pulse width will be set as goal pulse
 
-            self.time_before = my_time #Change the reference time before
+                self.duty = self.frequency * self.current_pulse_w #Calculates the duty of the signal
+                self.time_before = my_time #Change the reference time before
 
         #Block that controls the PWM signal in hardware pin
-        duty = int(self.frequency * self.current_pulse_w) #Calculates The Duty
-        pi.hardware_PWM(self.hardware_pin, self.frequency, duty) #Turns on the hardware pin
+        pi.hardware_PWM(self.hardware_pin, self.frequency, self.duty) #Turns on the hardware pin
 
     def stop(self, pi : pigpio.pi): #Function that stop the brushless motor
         """
         Function that stop the brushless motor softly. If the Pi is not the right type and the motor doesn't exist,
         it won't work
         
-        - Pi (pigpio.pi) -> Pi is one object from the class from 'pi' from the library pigpio
+        Args:
+            pi (pigpio.pi) -> 'pi' is one object from the class from 'pi' from the library pigpio
         """
 
         if self.hardware_pin is None: #Verify if hardware pin is None
@@ -193,16 +211,17 @@ class BrushlessMotor:
             return #Return if pi is not of class of 'pihardware.pi'
 
         #Desacceleration block for brushless motor
-        my_time = time.monotic() #The current time to compare with time before that have an acceleration
+        if self.current_pulse_w != self.min_w: #Verify if is necessary to change speed
+            my_time = time.monotic() #The current time to compare with time before that have an acceleration
 
-        if my_time - self.time_before >= self.period and self.current_pulse_w != self.min_w: #Verify if need to desaccelerate
-            self.current_pulse_w -= self.incremental #Decrease the current pulse width
-            self.time_before = my_time #Sets the new time before for nexts references
+            if my_time - self.time_before >= self.period: #Verify if need to desaccelerate
+                self.current_pulse_w -= self.incremental #Decrease the current pulse width
 
-            if self.current_pulse_w < self.min_w: #If it passes the current pulse width pass the minimum
-                self.current_pulse_w = self.min_w #Return to minimum if it have passed
+                if self.current_pulse_w < self.min_w: #If it passes the current pulse width pass the minimum
+                    self.current_pulse_w = self.min_w #Return to minimum if it have passed
 
+                self.time_before = my_time #Sets the new time before for nexts references
+                self.duty = int(self.frequency * self.current_pulse_w) #Calculates the duty of the signal
 
         #Block that controls the PWM signal in hardware pin
-        duty = int(self.frequency * self.current_pulse_w) #Calculates The Duty
-        pi.hardware_PWM(self.hardware_pin, self.frequency, duty) #Turns on the hardware pin
+        pi.hardware_PWM(self.hardware_pin, self.frequency, self.duty) #Turns on the hardware pin

@@ -1,7 +1,0 @@
-prefix=/home/guidshps/Programming/Python (Programming Language)/Titanic/.titanic
-includedir=${prefix}/include
-
-Name: AppleWMProto
-Description: AppleWM extension headers
-Version: 1.4.2
-Cflags: -I${includedir}

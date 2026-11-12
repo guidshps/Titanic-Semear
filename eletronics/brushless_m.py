@@ -28,6 +28,14 @@ class BrushlessMotor:
         ): 
         """
         Initializer of the class, if the type of the parameters are not correct, the motor won't work.
+
+        Args:
+            hardware_pin (int) -> The hardware pin that the signal is generated. You should verify your board.
+            frequency (int) -> The frequency that signal is generetad. 
+            min_w (int) -> The minumim pulse width that ESC will receive in microseconds
+            max_w (int)  -> Maximum pulse width that ESC will receive in microseconds
+            incremental (int) -> Amount that pulse is increased or decreased in each period in microseconds
+            period (float) -> Time between each increase or decrease of speed in seconds
         """
         if ( 
             not isinstance(hardware_pin, int) 

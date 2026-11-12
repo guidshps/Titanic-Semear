@@ -85,7 +85,7 @@ class ServoMotor:
 
     def force_angle(self, new_goal_angle : int):
         """
-        Function that set an new goal angle to the servo motor. It makes the servo brusily.
+        Function that set an new goal angle to the servo motor. It makes the servo accelerate brusily.
         
         Args:
             new_goal_angle (int) -> The angle that the servo will achieve.
@@ -137,12 +137,8 @@ class ServoMotor:
         if my_time - self.time_before >= self.period and self.current_angle != self.goal_angle: #Verify the conditions to change angle
             if self.current_angle > self.goal_angle: #If the current angle is bigger than the goal
                 self.current_angle -= 1 #Decrease the current angle
-                if self.current_angle < self.goal_angle: #If it has passed the goal angle
-                    self.current_angle = self.goal_angle #It is defined as the goal angle
             elif self.current_angle < self.goal_angle: #If the current angle is smaller than the goal
                 self.current_angle += 1 #Increase the current angle
-                if self.current_angle > self.goal_angle: #If it has passed the goal angle
-                    self.current_angle = self.goal_angle #It is defined as the goal angle
 
             self.time_before = my_time #Sets the new time reference 
             #Calculates the new pulse width
@@ -153,3 +149,28 @@ class ServoMotor:
 
         #Block that controls the hardware pin PWM signal
         pi.hardware_PWM(self.hardware_pin, self.frequency, self.duty)
+
+    def write(self, pi : pigpio.io, angle : int):
+        """
+        Function that makes the servo goes to the paramter angle, it makes the controler only
+        move the servo until it has the angle in the paramter. It won't work if the types of paramters 
+        are wrong type or the servo doesn't exist
+
+        Args:
+            pi (pigpio.pi) -> 'pi' is one object from the class from 'pi' from the library pigpio
+            angle (int) -> The destine angle that servo will move
+        """
+
+        if self.hardware_pin is None: #Verify if the servo exist
+            return #Return if the servo does not exist
+
+        elif not isinstance(pi, pigpio.pi): #Verify if pi is one 'pi' object
+            return #Return pi the pi is not the right object
+
+        elif not isinstance(angle, int): #Verify if the angle is an int
+            return #Return if the angle is not an int type
+
+        self.set_angle(angle) #Sets The Angle To Go
+
+        while self.current_angle != angle: #Until the current angle turns into the goal angle
+            self.run(pi) #Run the motor and accelerate it

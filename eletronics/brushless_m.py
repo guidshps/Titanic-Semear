@@ -55,7 +55,7 @@ class BrushlessMotor:
             self.period = None #Define 'None' how it does not exist
             self.time_before = None #Define 'None' how it does not exist
             self.duty = None #Define 'None' how it does not exist
-            return #Return if all of types are int
+            return #Return if all of types are correct
 
         self.hardware_pin = hardware_pin #The hardware pin from Raspberry Py 
         self.frequency = frequency #The frequency that Raspberry Pi runs the pulses
@@ -233,3 +233,19 @@ class BrushlessMotor:
 
         #Block that controls the PWM signal in hardware pin
         pi.hardware_PWM(self.hardware_pin, self.frequency, self.duty) #Turns on the hardware pin
+
+    def turn_off(self, pi : pigpio.pi):
+        """
+        Function that turns off the hardware pin from the brushless motor
+
+        Args:
+            pi (pigpio.pi) -> 'pi' is one object from the class from 'pi' from the library pigpio
+        """
+        if self.hardware_pin is None: #Verify if motor exists
+            return #Return if the motor does not exist
+
+        elif not isinstance(pi, pigpio.pi): #Verify the type of pi
+            return #Return if its not the right type
+
+        self.current_pulse_w = self.min_w #Sets to the min width
+        pi.hardware_PWM(self.hardware_pin, 0, 0) #Turns off the pin

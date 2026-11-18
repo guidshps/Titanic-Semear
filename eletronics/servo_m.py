@@ -132,7 +132,7 @@ class ServoMotor:
             return #Returns if pi is the wrong type
 
         #Block that changes angle and calculates the current pulse width
-        my_time = time.monotonic #Get the time reference from now
+        my_time = time.monotonic() #Get the time reference from now
 
         if my_time - self.time_before >= self.period and self.current_angle != self.goal_angle: #Verify the conditions to change angle
             if self.current_angle > self.goal_angle: #If the current angle is bigger than the goal
@@ -140,17 +140,17 @@ class ServoMotor:
             elif self.current_angle < self.goal_angle: #If the current angle is smaller than the goal
                 self.current_angle += 1 #Increase the current angle
 
-            self.time_before = my_time #Sets the new time reference 
+            self.time_before = float(my_time) #Sets the new time reference 
             #Calculates the new pulse width
-            self.current_pulse_w = ((self.current_angle - self.min_angle) * (self.max_w - self.min_w) / 
-                                    (self.max_angle - self.self.min_angle) + self.self.min_w)
-            self.duty = self.current_pulse_w * self.frequency #Calculates the new duty
+            self.current_pulse_w = int(((self.current_angle - self.min_angle) * (self.max_w - self.min_w) / 
+                                    (self.max_angle - self.min_angle) + self.min_w))
+            self.duty = int(self.current_pulse_w * self.frequency) #Calculates the new duty
 
 
         #Block that controls the hardware pin PWM signal
         pi.hardware_PWM(self.hardware_pin, self.frequency, self.duty)
 
-    def write(self, pi : pigpio.io, angle : int):
+    def write(self, pi : pigpio.pi, angle : int):
         """
         Function that makes the servo goes to the paramter angle, it makes the controler only
         move the servo until it has the angle in the paramter. It won't work if the types of paramters 

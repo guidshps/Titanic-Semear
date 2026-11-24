@@ -178,14 +178,16 @@ class BrushlessMotor:
         """
 
         if self.hardware_pin is None: #Verify if the hardware pin is valid
+            print("The brushless motor does not exist")
             return #Return if hardware pin is not valid
 
         elif not isinstance(pi, pigpio.pi): #Verify if the pi is not valid 
+            print("Wrong type of pi in run")
             return #Return if pi is not of class of 'pihardware.pi'
         
         #Acceleration or desacceleration block for brushless motor
-        if self.current_pulse_w != self.goal_pulse_w: #Verify if is necessary to change speed
-            my_time = time.monotic() #The current time to compare with time before the last acceleration
+        if self.current_pulse_w != self.current_pulse_w: #Verify if is necessary to change speed
+            my_time = time.monotonic() #The current time to compare with time before the last acceleration
 
             if my_time - self.time_before >= self.period: #Verify the period alrealdy have passed
                 if self.current_pulse_w > self.goal_pulse_w: #If the current pulse width is bigger than the goal
